@@ -24,16 +24,16 @@ class PartidaModel(Base):
     visitante_placar: Mapped[Optional[int]] = mapped_column(Integer)
     mandante_estado: Mapped[str] = mapped_column(String)
     visitante_estado: Mapped[str] = mapped_column(String)
-    gols: Mapped[List["GolModel"]] = relationship(
+    gols: Mapped[Optional[List["GolModel"]]] = relationship(
         "GolModel", back_populates="partida", uselist=True
     )
-    cartoes: Mapped[List["CartaoModel"]] = relationship(
+    cartoes: Mapped[Optional[List["CartaoModel"]]] = relationship(
         "CartaoModel", back_populates="partida", uselist=True
     )
-    estatisticas_visitante: Mapped["EstatisticasVisitanteModel"] = relationship(
+    estatisticas_visitante: Mapped[Optional["EstatisticasVisitanteModel"]] = relationship(
         "EstatisticasVisitanteModel", back_populates="partida", uselist=False
     )
-    estatisticas_mandante: Mapped["EstatisticasMandanteModel"] = relationship(
+    estatisticas_mandante: Mapped[Optional["EstatisticasMandanteModel"]] = relationship(
         "EstatisticasMandanteModel", back_populates="partida", uselist=False
     )
 
@@ -52,10 +52,10 @@ class PartidaDTO(BaseModel):
     visitante_placar: int
     mandante_estado: str
     visitante_estado: str
-    gols: List["ChildGolDTO"]
-    cartoes: List["ChildCartaoDTO"]
-    estatisticas_visitante: "ChildEstatisticasVisitanteDTO"
-    estatisticas_mandante: "ChildEstatisticasMandanteDTO"
+    gols: Optional[List["ChildGolDTO"]] = list
+    cartoes: Optional[List["ChildCartaoDTO"]] = list
+    estatisticas_visitante: Optional["ChildEstatisticasVisitanteDTO"] = None
+    estatisticas_mandante: Optional["ChildEstatisticasMandanteDTO"] = None
 
     @classmethod
     def resolve_refs(cls):
@@ -113,10 +113,10 @@ class ChildPartidaDTO(BaseModel):
     visitante_placar: Optional[int]
     mandante_estado: str
     visitante_estado: str
-    gols_ids: List[int]
-    cartoes_ids: List[int]
-    estatisticas_visitante_id: int
-    estatisticas_mandante_id: int
+    gols_ids: List[int] = list
+    cartoes_ids: List[int] = list
+    estatisticas_visitante_id: Optional[int] = None
+    estatisticas_mandante_id: Optional[int] = None
 
     @classmethod
     def from_orm(cls,partida) -> ChildPartidaDTO:
@@ -139,3 +139,18 @@ class ChildPartidaDTO(BaseModel):
             estatisticas_visitante_id=partida.estatisticas_visitante.id,
             estatisticas_mandante_id=partida.estatisticas_visitante.id
         )
+
+
+class CreatePartidaDTO(BaseModel):
+    rodada: int
+    data: str
+    hora: str
+    formacao_mandante: str
+    formacao_visitante: str
+    tecnico_mandante: str
+    tecnico_visitante: str
+    arena: str
+    mandante_placar: int
+    visitante_placar: int
+    mandante_estado: str
+    visitante_estado: str

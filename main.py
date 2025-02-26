@@ -14,6 +14,7 @@ from models import gol_models
 from models import cartoes_models
 from models import estatisticas_mandante_models
 from models import estatisticas_visitante_models
+from models.partida_models import PartidaDTO, PartidaModel, CreatePartidaDTO
 
 partida_models.PartidaDTO.resolve_refs()
 
@@ -50,25 +51,27 @@ def get_partidas(*, session: Session = Depends(get_db)):
     partidas_dto = partida_models.PartidaDTO.from_orm(partida)
     return partidas_dto
 
-@app.post("/partida")
-def post_partida(*, session: Session = Depends(get_db)):
+
+@app.post("/partida", response_model=PartidaDTO)
+def post_partida(*, session: Session = Depends(get_db), partida: CreatePartidaDTO):
     new_partida = partida_models.PartidaModel(
-        rodada=1,
-        data="2025-01-01",
-        hora="00:00",
-        formacao_mandante="4-4-2",
-        formacao_visitante="4-4-2",
-        tecnico_mandante="Tite",
-        tecnico_visitante="Guardiola",
-        arena="Maracanã",
-        mandante_placar=1,
-        visitante_placar=0,
-        mandante_estado="RJ",
-        visitante_estado="SP"
+        rodada=partida.rodada,
+        data=partida.data,
+        hora=partida.hora,
+        formacao_mandante=partida.formacao_mandante,
+        formacao_visitante=partida.formacao_visitante,
+        tecnico_mandante=partida.tecnico_mandante,
+        tecnico_visitante=partida.tecnico_visitante,
+        arena=partida.arena,
+        mandante_placar=partida.mandante_placar,
+        visitante_placar=partida.visitante_placar,
+        mandante_estado=partida.mandante_estado,
+        visitante_estado=partida.visitante_estado
     )
     session.add(new_partida)
     session.commit()
-    return {"status": "ok"}
+    session.refresh(new_partida)
+    return new_partida
 
 @app.get("/gol")
 def get_gols(*, session: Session = Depends(get_db)):
