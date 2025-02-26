@@ -1,8 +1,17 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from yaml import load, FullLoader
 
-DATABASE_URL = ("postgresql://postgres:postgres@localhost:4002/postgres")
+configurations = load(open("configs.yml", "r"), Loader=FullLoader)
+DATABASE_HOST = configurations["configs"]["database"]["host"]
+DATABASE_PORT = configurations["configs"]["database"]["port"]
+DATABASE_NAME = configurations["configs"]["database"]["name"]
+DATABASE_USER = configurations["configs"]["database"]["username"]
+DATABASE_PASSWORD = configurations["configs"]["database"]["password"]
+
+
+DATABASE_URL = f"postgresql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
 engine = create_engine(DATABASE_URL)
 session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

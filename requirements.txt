@@ -1,0 +1,10 @@
+fastapi[standard]
+uvicorn
+sqlalchemy
+pydantic
+motor
+psycopg2
+logger
+alembic
+python-dotenv
+pyyaml
