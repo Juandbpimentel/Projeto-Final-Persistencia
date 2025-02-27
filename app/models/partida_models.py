@@ -59,10 +59,10 @@ class PartidaDTO(BaseModel):
 
     @classmethod
     def resolve_refs(cls):
-        from models.gol_models import ChildGolDTO
-        from models.cartoes_models import ChildCartaoDTO
-        from models.estatisticas_mandante_models import ChildEstatisticasMandanteDTO
-        from models.estatisticas_visitante_models import ChildEstatisticasVisitanteDTO
+        from app.models.gol_models import ChildGolDTO
+        from app.models.cartoes_models import ChildCartaoDTO
+        from app.models.estatisticas_mandante_models import ChildEstatisticasMandanteDTO
+        from app.models.estatisticas_visitante_models import ChildEstatisticasVisitanteDTO
 
         cls.model_rebuild(_types_namespace={
             "ChildGolDTO": ChildGolDTO,
@@ -73,10 +73,10 @@ class PartidaDTO(BaseModel):
 
     @classmethod
     def from_orm(cls, partida):
-        from models.gol_models import ChildGolDTO
-        from models.cartoes_models import ChildCartaoDTO
-        from models.estatisticas_mandante_models import ChildEstatisticasMandanteDTO
-        from models.estatisticas_visitante_models import ChildEstatisticasVisitanteDTO
+        from app.models.gol_models import ChildGolDTO
+        from app.models.cartoes_models import ChildCartaoDTO
+        from app.models.estatisticas_mandante_models import ChildEstatisticasMandanteDTO
+        from app.models.estatisticas_visitante_models import ChildEstatisticasVisitanteDTO
 
         return cls(
             id=partida.id,

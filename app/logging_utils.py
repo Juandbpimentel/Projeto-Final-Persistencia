@@ -11,7 +11,7 @@ class IgnoreWatchfilesFilter(logging.Filter):
     def filter(self, record):
         return "watchfiles.main" not in record.name
 
-def setup_logging(config_path='configs.yml'):
+def setup_logging(config_path='app/configs.yml'):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file.read())
         logging_config = {

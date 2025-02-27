@@ -34,8 +34,6 @@ class GolDTO(BaseModel):
 
     @classmethod
     def from_orm(cls, gol) -> Self:
-        from models.partida_models import PartidaModel
-        from models.partida_models import ChildPartidaDTO
         partida_model: PartidaModel = gol.partida
 
         return cls(

@@ -22,7 +22,7 @@ partida_models.PartidaDTO.resolve_refs()
 
 setup_logging()
 
-configs = load(open("configs.yml", "r"), Loader=FullLoader)
+configs = load(open("app/configs.yml", "r"), Loader=FullLoader)
 SERVER_PORT = configs["configs"]["server"]["port"]
 SERVER_HOST = configs["configs"]["server"]["host"]
 

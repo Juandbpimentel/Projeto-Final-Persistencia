@@ -39,3 +39,9 @@ Instale as dependências:
 ```bash
 pip install -r requirements.txt
 ```
+
+Rode o projeto:
+
+```bash 
+python -m fastapi run .\app\main.py --reload
+```

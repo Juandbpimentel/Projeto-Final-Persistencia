@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional, Any, Self
 
 from pydantic import BaseModel, Field
-from sqlalchemy import String, BigInteger, ForeignKey, Integer, DOUBLE_PRECISION, Boolean
+from sqlalchemy import String, ForeignKey, Integer, DOUBLE_PRECISION, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database_util import Base
 

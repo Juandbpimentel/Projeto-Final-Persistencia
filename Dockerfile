@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+WORKDIR /
 
 COPY requirements.txt .
 
@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . /app
+COPY app /app
 
 EXPOSE 8000
 

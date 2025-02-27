@@ -10,5 +10,5 @@ configs:
         port: 8081
   logging:
       level: "INFO"
-      filename: "app.log"
+      filename: "app/app.log"
       format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
