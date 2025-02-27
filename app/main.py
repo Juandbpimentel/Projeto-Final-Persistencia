@@ -6,15 +6,17 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from yaml import load, FullLoader
 import logging
-from logging_utils import setup_logging, log_exceptions_middleware
-from database_util import Base, engine, get_db
+from app.logging_utils import setup_logging, log_exceptions_middleware
+from app.database_util import Base, engine, get_db
+from app.models import (
+    partida_models,
+    gol_models,
+    cartoes_models,
+    estatisticas_mandante_models,
+    estatisticas_visitante_models
+)
+from app.models.partida_models import PartidaDTO, PartidaModel, CreatePartidaDTO
 
-from models import partida_models
-from models import gol_models
-from models import cartoes_models
-from models import estatisticas_mandante_models
-from models import estatisticas_visitante_models
-from models.partida_models import PartidaDTO, PartidaModel, CreatePartidaDTO
 
 partida_models.PartidaDTO.resolve_refs()
 

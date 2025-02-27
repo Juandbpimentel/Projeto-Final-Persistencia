@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import String, BigInteger, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from database_util import Base
+from app.database_util import Base
 
 
 class PartidaModel(Base):

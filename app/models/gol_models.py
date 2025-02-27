@@ -5,9 +5,9 @@ from typing import Optional, Any, Self
 from pydantic import BaseModel, Field
 from sqlalchemy import String, BigInteger, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database_util import Base
+from app.database_util import Base
 
-from models.partida_models import ChildPartidaDTO
+from app.models.partida_models import ChildPartidaDTO, PartidaModel
 
 
 class GolModel(Base):

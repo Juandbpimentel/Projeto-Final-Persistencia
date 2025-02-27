@@ -5,9 +5,9 @@ from typing import Optional, Any, Self
 from pydantic import BaseModel, Field
 from sqlalchemy import String, BigInteger, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database_util import Base
+from app.database_util import Base
 
-from models.partida_models import ChildPartidaDTO
+from app.models.partida_models import ChildPartidaDTO, PartidaModel
 
 class CartaoModel(Base):
     __tablename__ = "cartoes"
@@ -37,8 +37,6 @@ class CartaoDTO(BaseModel):
 
     @classmethod
     def from_orm(cls, cartao) -> Self:
-        from models.partida_models import PartidaModel
-        from models.partida_models import ChildPartidaDTO
         partida_model: PartidaModel = cartao.partida
 
         return cls(

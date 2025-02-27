@@ -5,9 +5,9 @@ from typing import Optional, Any, Self
 from pydantic import BaseModel, Field
 from sqlalchemy import String, BigInteger, ForeignKey, Integer, DOUBLE_PRECISION, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from database_util import Base
+from app.database_util import Base
 
-from models.partida_models import ChildPartidaDTO
+from app.models.partida_models import ChildPartidaDTO, PartidaModel
 
 class EstatisticasMandanteModel(Base):
     __tablename__ = "estatisticas_mandantes"
@@ -49,8 +49,6 @@ class EstatisticasMandanteDTO(BaseModel):
 
     @classmethod
     def from_orm(cls, estatisticas_mandante) -> Self:
-        from models.partida_models import PartidaModel
-        from models.partida_models import ChildPartidaDTO
         partida_model: PartidaModel = estatisticas_mandante.partida
 
         return cls(

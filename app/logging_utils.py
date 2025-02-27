@@ -5,7 +5,7 @@ import logging.config
 import yaml
 from fastapi.responses import JSONResponse
 
-from error_response import ErrorResponse
+from app.error_response import ErrorResponse
 
 class IgnoreWatchfilesFilter(logging.Filter):
     def filter(self, record):
