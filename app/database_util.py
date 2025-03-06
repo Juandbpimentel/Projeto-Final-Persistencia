@@ -13,7 +13,7 @@ DATABASE_PASSWORD = configurations["configs"]["database"]["password"]
 
 url_by_env = os.getenv("DATABASE_URL")
 DATABASE_URL = url_by_env if url_by_env is not None else f"postgresql+asyncpg://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}:{DATABASE_PORT}/{DATABASE_NAME}"
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=True, pool_size=10, max_overflow=20)
 async_session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 Base = declarative_base()
 
@@ -21,7 +21,6 @@ async def get_db():
     async with async_session_local() as session:
         try:
             yield session
-            await session.commit()
         finally:
             await session.close()
 

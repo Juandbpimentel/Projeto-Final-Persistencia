@@ -2,6 +2,7 @@
 from fastapi import FastAPI, Depends
 import pandas as pd
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 import logging
 from contextlib import asynccontextmanager
@@ -33,12 +34,17 @@ configs = load(open("app/configs.yml", "r"), Loader=FullLoader)
 SERVER_PORT = configs["configs"]["server"]["port"]
 SERVER_HOST = configs["configs"]["server"]["host"]
 
+
 @asynccontextmanager
-async def lifespan(_app_: FastAPI):
+async def lifespan(app: FastAPI):
     await init_db()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    yield
+    try:
+        yield
+    finally:
+        await engine.dispose()
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -46,19 +52,22 @@ app.middleware("http")(log_exceptions_middleware)
 
 app.include_router(partida_routes.router)
 
+
 @app.get("/")
-def read_root(*, session: Session = Depends(get_db)):
+async def read_root(session: AsyncSession = Depends(get_db)):
     logging.info("Handling request to root endpoint")
-    session.execute(text("CREATE TABLE IF NOT EXISTS teste (id VARCHAR PRIMARY KEY, nome VARCHAR(255))"))
-    new_id = str(uuid.uuid4())
-    new_id2 = str(uuid.uuid4())
-    session.execute(text("INSERT INTO teste (id, nome) VALUES (:id, :nome)"), {"id": new_id, "nome": "teste"})
-    session.execute(text("INSERT INTO teste (id, nome) VALUES (:id, :nome)"), {"id": new_id2, "nome": "teste2"})
-    result = session.execute(text("SELECT * FROM teste")).all()
-    session.execute(text("DROP TABLE teste"))
-    session.commit()
+    async with session.begin():
+        await session.execute(text("CREATE TABLE IF NOT EXISTS teste (id VARCHAR PRIMARY KEY, nome VARCHAR(255))"))
+        new_id = str(uuid.uuid4())
+        new_id2 = str(uuid.uuid4())
+        await session.execute(text("INSERT INTO teste (id, nome) VALUES (:id, :nome)"), {"id": new_id, "nome": "teste"})
+        await session.execute(text("INSERT INTO teste (id, nome) VALUES (:id, :nome)"), {"id": new_id2, "nome": "teste2"})
+        result = await session.execute(text("SELECT * FROM teste"))
+        result = result.fetchall()
+        await session.execute(text("DROP TABLE teste"))
+        await session.commit()
     logging.info(f"Query result: {result}")
-    result_dicts = pd.DataFrame(result).to_dict()
+    result_dicts = pd.DataFrame(result).to_dict(orient='records')
     return {"Hello": "World", "resultado de teste de banco de dados": result_dicts}
 
 # @app.get("/gol")

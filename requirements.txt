@@ -9,5 +9,6 @@ alembic
 python-dotenv
 databases
 asyncpg
+pandas
 asyncio
 pyyaml

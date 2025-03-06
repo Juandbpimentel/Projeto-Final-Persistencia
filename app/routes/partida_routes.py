@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import select, inspect
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 
@@ -70,38 +70,42 @@ async def get_partida(partida_id: int, session: AsyncSession = Depends(get_db)) 
 
 @router.post("", response_model=PartidaDTO)
 async def post_partida(*, session: AsyncSession = Depends(get_db), partida: CreatePartidaDTO) -> PartidaDTO:
-    async with session.begin():
-        new_partida = PartidaModel(
-            rodada=partida.rodada,
-            data=partida.data,
-            hora=partida.hora,
-            formacao_mandante=partida.formacao_mandante,
-            formacao_visitante=partida.formacao_visitante,
-            tecnico_mandante=partida.tecnico_mandante,
-            tecnico_visitante=partida.tecnico_visitante,
-            arena=partida.arena,
-            mandante_placar=partida.mandante_placar,
-            visitante_placar=partida.visitante_placar,
-            mandante_estado=partida.mandante_estado,
-            visitante_estado=partida.visitante_estado
-        )
-        session.add(new_partida)
-        await session.commit()
-        await session.refresh(new_partida)
+    new_partida = PartidaModel(
+        rodada=partida.rodada,
+        data=partida.data,
+        hora=partida.hora,
+        formacao_mandante=partida.formacao_mandante,
+        formacao_visitante=partida.formacao_visitante,
+        tecnico_mandante=partida.tecnico_mandante,
+        tecnico_visitante=partida.tecnico_visitante,
+        arena=partida.arena,
+        mandante_placar=partida.mandante_placar,
+        visitante_placar=partida.visitante_placar,
+        mandante_estado=partida.mandante_estado,
+        visitante_estado=partida.visitante_estado
+    )
+    session.add(new_partida)
+    await session.commit()
+    await session.refresh(new_partida, [attr.key for attr in inspect(PartidaModel).attrs])
     return PartidaDTO.from_orm(new_partida)
 
 @router.put("/{partida_id}", response_model=PartidaDTO)
 async def update_partida(partida_id: int, partida: CreatePartidaDTO, session: AsyncSession = Depends(get_db)) -> PartidaDTO:
-    async with session.begin():
-        existing_partida = await session.get(PartidaModel, partida_id)
-        if not existing_partida:
-            raise HTTPException(status_code=404, detail="Partida not found")
+    existing_partida = await session.get(PartidaModel, partida_id, options=[
+        selectinload(PartidaModel.gols),
+        selectinload(PartidaModel.cartoes),
+        selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(PartidaModel.estatisticas_mandante)
+    ])
+    if not existing_partida:
+        raise HTTPException(status_code=404, detail="Partida não encontrada")
 
-        for key, value in partida.model_dump().items():
-            setattr(existing_partida, key, value)
+    for key, value in partida.model_dump().items():
+        setattr(existing_partida, key, value)
 
-        await session.commit()
-        await session.refresh(existing_partida)
+    session.add(existing_partida)
+    await session.commit()
+    await session.refresh(existing_partida)
     return PartidaDTO.from_orm(existing_partida)
 
 @router.delete("/{partida_id}", response_model=dict)
