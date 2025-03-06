@@ -23,13 +23,13 @@ ALTER TABLE estatisticas_mandantes ALTER COLUMN id SET DEFAULT nextval('estatist
 SELECT setval('estatisticas_mandantes_id_seq', COALESCE(MAX(id), 1)) FROM estatisticas_mandantes;
 ALTER TABLE estatisticas_mandantes ADD PRIMARY KEY (id);
 
-ALTER TABLE cartoes ADD CONSTRAINT fk_cartoes_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id);
+ALTER TABLE cartoes ADD CONSTRAINT fk_cartoes_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
-ALTER TABLE gols ADD CONSTRAINT fk_gols_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id);
+ALTER TABLE gols ADD CONSTRAINT fk_gols_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
-ALTER TABLE estatisticas_visitantes ADD CONSTRAINT fk_estatisticas_visitantes_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id);
+ALTER TABLE estatisticas_visitantes ADD CONSTRAINT fk_estatisticas_visitantes_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
-ALTER TABLE estatisticas_mandantes ADD CONSTRAINT fk_estatisticas_mandantes_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id);
+ALTER TABLE estatisticas_mandantes ADD CONSTRAINT fk_estatisticas_mandantes_partida_id FOREIGN KEY (partida_id) REFERENCES partidas(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 -- Quero que faça a conversão de todos os campos para inteiros

@@ -12,8 +12,8 @@ from app.database_util import Base
 class PartidaModel(Base):
     __tablename__ = "partidas"
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    rodada: Mapped[int] = mapped_column(Integer)
-    data: Mapped[str] = mapped_column(String)
+    rodada: Mapped[int] = mapped_column(Integer, index=True)
+    data: Mapped[str] = mapped_column(String, index=True)
     hora: Mapped[str] = mapped_column(String)
     formacao_mandante: Mapped[str] = mapped_column(String)
     formacao_visitante: Mapped[str] = mapped_column(String)
@@ -72,7 +72,7 @@ class PartidaDTO(BaseModel):
         })
 
     @classmethod
-    def from_orm(cls, partida):
+    def from_orm(cls, partida: PartidaModel) -> PartidaDTO:
         from app.models.gol_models import ChildGolDTO
         from app.models.cartoes_models import ChildCartaoDTO
         from app.models.estatisticas_mandante_models import ChildEstatisticasMandanteDTO
@@ -94,8 +94,10 @@ class PartidaDTO(BaseModel):
             visitante_estado=partida.visitante_estado,
             gols=[ChildGolDTO.from_orm(gol) for gol in partida.gols],
             cartoes=[ChildCartaoDTO.from_orm(cartao) for cartao in partida.cartoes],
-            estatisticas_visitante= ChildEstatisticasMandanteDTO.from_orm(partida.estatisticas_visitante),
-            estatisticas_mandante= ChildEstatisticasVisitanteDTO.from_orm(partida.estatisticas_mandante)
+            estatisticas_visitante=ChildEstatisticasMandanteDTO.from_orm(
+                partida.estatisticas_visitante) if partida.estatisticas_visitante else None,
+            estatisticas_mandante=ChildEstatisticasVisitanteDTO.from_orm(
+                partida.estatisticas_mandante) if partida.estatisticas_mandante else None
         )
 
 
