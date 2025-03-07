@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Optional, Any, Self
+from typing import Optional, Self
 
 from pydantic import BaseModel, Field
-from sqlalchemy import String, BigInteger, ForeignKey, Integer
+from sqlalchemy import String, ForeignKey, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database_util import Base
 
@@ -66,3 +66,11 @@ class ChildGolDTO(BaseModel):
             minuto=gol.minuto,
             tipo_de_gol=gol.tipo_de_gol
         )
+        
+class CreateGolDTO(BaseModel):
+    partida_id: int
+    rodada: int
+    clube: str
+    atleta: str
+    minuto: str
+    tipo_de_gol: str
