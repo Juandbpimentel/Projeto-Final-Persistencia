@@ -156,3 +156,15 @@ class CreatePartidaDTO(BaseModel):
     visitante_placar: int
     mandante_estado: str
     visitante_estado: str
+
+
+class EstatisticasPartidasResponse(BaseModel):
+    media_gols_mandante: float
+    media_gols_visitante: float
+    total_gols_mandante: int
+    total_gols_visitante: int
+
+class VitoriasGolsPorRodadaResponse(BaseModel):
+    rodada: int
+    vitorias: int
+    gols: int
