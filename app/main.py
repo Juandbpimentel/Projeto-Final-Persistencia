@@ -1,32 +1,30 @@
+# app/main.py
 from fastapi import FastAPI, Depends
-
-import logging
-import uuid
-from contextlib import asynccontextmanager
-
 import pandas as pd
-from panel.io.fastapi import add_applications
-import panel as pn
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
+import logging
+from contextlib import asynccontextmanager
+
 from yaml import load, FullLoader
+import uuid
+import uvicorn
 
-
-from app.database_util import Base, engine, get_db, init_db
 from app.logging_utils import setup_logging, log_exceptions_middleware
+from app.database_util import Base, engine, get_db, init_db
 from app.models import (
-    partida_models
+    partida_models,
+    gol_models,
+    cartoes_models,
+    estatisticas_mandante_models,
+    estatisticas_visitante_models
 )
 
 from app.routes import (
     partida_routes,
-    tratamento_routes,
-    cartoes_routes,
-    gols_routes,
-    estatisticas_visitante_routes,
-    estatisticas_mandante_routes,
-    telas_routes
 )
+from app.models.partida_models import PartidaDTO, PartidaModel, CreatePartidaDTO
 
 partida_models.PartidaDTO.resolve_refs()
 
@@ -53,11 +51,7 @@ app = FastAPI(lifespan=lifespan)
 app.middleware("http")(log_exceptions_middleware)
 
 app.include_router(partida_routes.router)
-app.include_router(tratamento_routes.router)
-app.include_router(estatisticas_visitante_routes.router)
-app.include_router(estatisticas_mandante_routes.router)
-app.include_router(gols_routes.router)
-app.include_router(cartoes_routes.router)
+
 
 @app.get("/")
 async def read_root(session: AsyncSession = Depends(get_db)):
