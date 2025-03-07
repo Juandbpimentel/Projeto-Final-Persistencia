@@ -1,30 +1,24 @@
-# app/main.py
-from fastapi import FastAPI, Depends
-import pandas as pd
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 import logging
+import uuid
 from contextlib import asynccontextmanager
 
+import pandas as pd
+from fastapi import FastAPI, Depends
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 from yaml import load, FullLoader
-import uuid
-import uvicorn
 
-from app.logging_utils import setup_logging, log_exceptions_middleware
 from app.database_util import Base, engine, get_db, init_db
+from app.logging_utils import setup_logging, log_exceptions_middleware
 from app.models import (
-    partida_models,
-    gol_models,
-    cartoes_models,
-    estatisticas_mandante_models,
-    estatisticas_visitante_models
+    partida_models
 )
-
 from app.routes import (
     partida_routes,
+    tratamento_routes,
+    estatisticas_visitante_routes,
+    estatisticas_mandante_routes
 )
-from app.models.partida_models import PartidaDTO, PartidaModel, CreatePartidaDTO
 
 partida_models.PartidaDTO.resolve_refs()
 
@@ -51,7 +45,9 @@ app = FastAPI(lifespan=lifespan)
 app.middleware("http")(log_exceptions_middleware)
 
 app.include_router(partida_routes.router)
-
+app.include_router(tratamento_routes.router)
+app.include_router(estatisticas_visitante_routes.router)
+app.include_router(estatisticas_mandante_routes.router)
 
 @app.get("/")
 async def read_root(session: AsyncSession = Depends(get_db)):
@@ -69,27 +65,3 @@ async def read_root(session: AsyncSession = Depends(get_db)):
     logging.info(f"Query result: {result}")
     result_dicts = pd.DataFrame(result).to_dict(orient='records')
     return {"Hello": "World", "resultado de teste de banco de dados": result_dicts}
-
-# @app.get("/gol")
-# def get_gols(*, session: Session = Depends(get_db)):
-#     gol = session.query(gol_models.GolModel).limit(1).offset(1000).one()
-#     gols_dto = gol_models.GolDTO.from_orm(gol)
-#     return gols_dto
-#
-# @app.get("/cartao")
-# def get_cartoes(*, session: Session = Depends(get_db)):
-#     cartao = session.query(gol_models.GolModel).limit(1).offset(1000).one()
-#     cartoes_dto = gol_models.GolDTO.from_orm(cartao)
-#     return cartoes_dto
-#
-# @app.get("/estatisticas_mandante")
-# def get_estatisticas_mandantes(*, session: Session = Depends(get_db)):
-#     estatisticas_mandante = session.query(estatisticas_mandante_models.EstatisticasMandanteModel).limit(1).offset(1000).one()
-#     estatisticas_mandantes_dto = estatisticas_mandante_models.EstatisticasMandanteDTO.from_orm(estatisticas_mandante)
-#     return estatisticas_mandantes_dto
-#
-# @app.get("/estatisticas_visitante")
-# def get_estatisticas_visitantes(*, session: Session = Depends(get_db)):
-#     estatisticas_visitante = session.query(estatisticas_visitante_models.EstatisticasVisitanteModel).limit(1).offset(1000).one()
-#     estatisticas_visitantes_dto = estatisticas_visitante_models.EstatisticasVisitanteDTO.from_orm(estatisticas_visitante)
-#     return estatisticas_visitantes_dto
