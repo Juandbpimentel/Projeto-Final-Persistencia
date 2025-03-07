@@ -6,8 +6,8 @@ from typing import List, Optional
 
 from sqlalchemy.orm import subqueryload, selectinload
 
-from app.database_util import get_db
 from app.models.partida_models import PartidaModel, PartidaDTO, CreatePartidaDTO
+from app.database_util import get_db
 
 router = APIRouter(
     prefix="/partidas",
