@@ -2,36 +2,39 @@
 Projeto Final de Persistência de usam dados abertos do governo
 
 
+```markdown
+
+
 ## Como rodar o projeto
 
-Primeiramente, é necessário instalar o Python 3.12.
+Primeiramente, é necessário instalar o Python 3.12. Exemplo de resolução no Windows
 
 ```bash
-sudo apt-get install python3.12
+choco install python --version=3.12
 ```
 
-Depois, instale o pip:
+Depois, instale o pip (já incluído com a instalação do Python 3.12):
 
 ```bash
-sudo apt-get install python3-pip
+python -m ensurepip --upgrade
 ```
 
 Instale o virtualenv:
 
 ```bash
-sudo apt-get install python3-virtualenv
+pip install virtualenv
 ```
 
 Crie um ambiente virtual:
 
 ```bash
-virtualenv venv
+python -m virtualenv venv
 ```
 
 Ative o ambiente virtual:
 
 ```bash
-source venv/bin/activate
+.\venv\Scripts\activate
 ```
 
 Instale as dependências:
