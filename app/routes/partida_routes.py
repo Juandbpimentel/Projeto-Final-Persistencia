@@ -34,42 +34,18 @@ class PartidasResponse(BaseModel):
 @router.get("/list", response_model=PartidasResponse)
 async def fetch_partidas_with_cursor(
         session: AsyncSession = Depends(get_db),
-        limit: int = Query(10, ge=0),
-        start_cursor: Optional[int] = Query(None),
-        rodada: Optional[int] = Query(None),
-        data_inicio: Optional[str] = Query(None),
-        data_fim: Optional[str] = Query(None),
-        mandante: Optional[str] = Query(None),
-        visitante: Optional[str] = Query(None),
-        estado: Optional[str] = Query(None),
+        limit: int = Query(10, ge=1),
+        start_cursor: Optional[int] = Query(None)
 ) -> PartidasResponse:
     query = select(PartidaModel).order_by(PartidaModel.id).options(
         selectinload(PartidaModel.gols),
         selectinload(PartidaModel.cartoes),
         selectinload(PartidaModel.estatisticas_visitante),
         selectinload(PartidaModel.estatisticas_mandante)
-    )
-
-    if not limit and limit != 0:
-        query = query.limit(10)
-    elif limit > 0:
-        query = query.limit(limit)
+    ).limit(limit)
 
     if start_cursor:
         query = query.where(PartidaModel.id > start_cursor)
-    if rodada:
-        query = query.where(PartidaModel.rodada == rodada)
-    from sqlalchemy import func
-    if data_inicio:
-        query = query.where(func.to_date(PartidaModel.data, 'DD/MM/YYYY') >= func.to_date(data_inicio, 'DD/MM/YYYY'))
-    if data_fim:
-        query = query.where(func.to_date(PartidaModel.data, 'DD/MM/YYYY') <= func.to_date(data_fim, 'DD/MM/YYYY'))
-    if mandante:
-        query = query.where(PartidaModel.estatisticas_mandante.has(clube=mandante))
-    if visitante:
-        query = query.where(PartidaModel.estatisticas_visitante.has(clube=visitante))
-    if estado:
-        query = query.where(PartidaModel.mandante_estado == estado)
 
     result = await session.execute(query)
     partidas = result.scalars().all()
@@ -79,11 +55,6 @@ async def fetch_partidas_with_cursor(
 
     return PartidasResponse(partidas=partidas_dto, next_cursor=next_cursor)
 
-@router.get("/count", response_model=int)
-async def count_partidas(session: AsyncSession = Depends(get_db)) -> int:
-    query = select(PartidaModel.id)
-    result = await session.execute(query)
-    return len(result.scalars().all())
 
 @router.get("/estatisticas", response_model=EstatisticasPartidasResponse)
 async def get_estatisticas(session: AsyncSession = Depends(get_db)) -> EstatisticasPartidasResponse:

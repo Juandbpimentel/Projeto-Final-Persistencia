@@ -54,8 +54,8 @@ class PartidaDTO(BaseModel):
     visitante_estado: str
     gols: Optional[List["ChildGolDTO"]] = list
     cartoes: Optional[List["ChildCartaoDTO"]] = list
-    estatisticas_visitante: Optional["ChildEstatisticasVisitanteDTO"] | None = None
-    estatisticas_mandante: Optional["ChildEstatisticasMandanteDTO"] | None = None
+    estatisticas_visitante: Optional["ChildEstatisticasVisitanteDTO"] = None
+    estatisticas_mandante: Optional["ChildEstatisticasMandanteDTO"] = None
 
     @classmethod
     def resolve_refs(cls):
@@ -67,8 +67,8 @@ class PartidaDTO(BaseModel):
         cls.model_rebuild(_types_namespace={
             "ChildGolDTO": ChildGolDTO,
             "ChildCartaoDTO": ChildCartaoDTO,
-            "ChildEstatisticasVisitanteDTO":ChildEstatisticasVisitanteDTO ,
-            "ChildEstatisticasMandanteDTO": ChildEstatisticasMandanteDTO
+            "ChildEstatisticasVisitanteDTO": ChildEstatisticasMandanteDTO,
+            "ChildEstatisticasMandanteDTO": ChildEstatisticasVisitanteDTO
         })
 
     @classmethod
@@ -94,9 +94,9 @@ class PartidaDTO(BaseModel):
             visitante_estado=partida.visitante_estado,
             gols=[ChildGolDTO.from_orm(gol) for gol in partida.gols],
             cartoes=[ChildCartaoDTO.from_orm(cartao) for cartao in partida.cartoes],
-            estatisticas_visitante=ChildEstatisticasVisitanteDTO.from_orm(
+            estatisticas_visitante=ChildEstatisticasMandanteDTO.from_orm(
                 partida.estatisticas_visitante) if partida.estatisticas_visitante else None,
-            estatisticas_mandante=ChildEstatisticasMandanteDTO.from_orm(
+            estatisticas_mandante=ChildEstatisticasVisitanteDTO.from_orm(
                 partida.estatisticas_mandante) if partida.estatisticas_mandante else None
         )
 
@@ -117,8 +117,8 @@ class ChildPartidaDTO(BaseModel):
     visitante_estado: str
     gols_ids: List[int] = list
     cartoes_ids: List[int] = list
-    estatisticas_visitante_id: Optional[int] | None = None
-    estatisticas_mandante_id: Optional[int] | None = None
+    estatisticas_visitante_id: Optional[int] = None
+    estatisticas_mandante_id: Optional[int] = None
 
     @classmethod
     def from_orm(cls,partida) -> ChildPartidaDTO:
@@ -138,8 +138,8 @@ class ChildPartidaDTO(BaseModel):
             visitante_estado=partida.visitante_estado,
             gols_ids=[gol.id for gol in partida.gols],
             cartoes_ids=[cartao.id for cartao in partida.cartoes],
-            estatisticas_visitante_id=partida.estatisticas_visitante.id if partida.estatisticas_visitante else None,
-            estatisticas_mandante_id=partida.estatisticas_mandante.id  if partida.estatisticas_mandante else None,
+            estatisticas_visitante_id=partida.estatisticas_visitante.id,
+            estatisticas_mandante_id=partida.estatisticas_visitante.id
         )
 
 

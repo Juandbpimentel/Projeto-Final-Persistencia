@@ -48,10 +48,7 @@ def setup_logging(config_path='app/configs.yml'):
 
 async def log_exceptions_middleware(request: Request, call_next):
     try:
-        if "/tratamentos/tratar_dados" in request.url.path:
-            logging.info(f"Request {request.method} {request.url} received, body: {(await request.body())[:1000]}...")
-        else:
-            logging.info(f"Request {request.method} {request.url} received, body: {await request.body()}")
+        logging.info(f"Request {request.method} {request.url} received, body: {await request.body()}")
         response = await call_next(request)
         logging.info(f"Request {request.method} {request.url} processed: {response.status_code}")
         return response
