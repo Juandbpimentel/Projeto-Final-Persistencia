@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Any, Self
+from typing import Optional, Self
 
 from pydantic import BaseModel, Field
 from sqlalchemy import String, BigInteger, ForeignKey
@@ -75,3 +75,14 @@ class ChildCartaoDTO(BaseModel):
             posicao=cartao.posicao,
             minuto=cartao.minuto
         )
+        
+
+class CreateCartaoDTO(BaseModel):
+    partida_id: int
+    rodada: int
+    clube: str
+    cartao: str
+    atleta: str
+    num_camisa: int
+    posicao: str
+    minuto: str
