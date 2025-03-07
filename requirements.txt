@@ -10,6 +10,7 @@ python-dotenv
 databases
 asyncpg
 pandas
-starlette
 asyncio
 pyyaml
+matplotlib
+unidecode
