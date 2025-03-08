@@ -296,24 +296,27 @@ async def delete_partida(partida_id: int, session: AsyncSession = Depends(get_db
 @router.get("/grafico/gols", response_class=StreamingResponse)
 async def grafico_gols(session: AsyncSession = Depends(get_db)):
     query = select(
-        PartidaModel.data,
+        PartidaModel.rodada,
         PartidaModel.mandante_placar,
         PartidaModel.visitante_placar
-    ).order_by(PartidaModel.data)
+    ).order_by(PartidaModel.rodada)
 
     result = await session.execute(query)
     partidas = result.fetchall()
 
-    datas = [partida.data for partida in partidas]
+    rodadas = [partida.rodada for partida in partidas]
     mandante_gols = [partida.mandante_placar for partida in partidas]
     visitante_gols = [partida.visitante_placar for partida in partidas]
 
+    cumulative_mandante_gols = [sum(mandante_gols[:i + 1]) for i in range(len(mandante_gols))]
+    cumulative_visitante_gols = [sum(visitante_gols[:i + 1]) for i in range(len(visitante_gols))]
+
     plt.figure(figsize=(10, 5))
-    plt.plot(datas, mandante_gols, label='Mandante Gols')
-    plt.plot(datas, visitante_gols, label='Visitante Gols')
-    plt.xlabel('Data')
+    plt.plot(rodadas, cumulative_mandante_gols, label='Mandante Gols')
+    plt.plot(rodadas, cumulative_visitante_gols, label='Visitante Gols')
+    plt.xlabel('Rodadas')
     plt.ylabel('Gols')
-    plt.title('Gols por Data')
+    plt.title('Gols por Rodada')
     plt.legend()
     plt.xticks(rotation=45)
 
@@ -322,4 +325,3 @@ async def grafico_gols(session: AsyncSession = Depends(get_db)):
     buf.seek(0)
 
     return StreamingResponse(buf, media_type="image/png")
-

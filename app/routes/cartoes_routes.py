@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.cartoes_models import CartaoModel, CartaoDTO, CreateCartaoDTO
 from app.database_util import get_db
+from app.models.partida_models import PartidaModel
 
 router = APIRouter(
     prefix="/cartoes",
@@ -31,7 +32,11 @@ async def fetch_cartoes_with_cursor(
     start_cursor: Optional[int] = Query(None)
 ) -> CartoesResponse:
     query = select(CartaoModel).order_by(CartaoModel.id).options(
-        selectinload(CartaoModel.partida)
+        selectinload(CartaoModel.partida),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.gols),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.cartoes)
     ).limit(limit)
 
     if start_cursor:
@@ -46,12 +51,46 @@ async def fetch_cartoes_with_cursor(
     return CartoesResponse(cartoes=cartoes_dto, next_cursor=next_cursor)
 
 
+@router.get("/contagem-por-clube", response_model=Dict[str, Dict[str, int]])
+async def get_contagem_cartoes_por_clube(
+        session: AsyncSession = Depends(get_db)
+) -> Dict[str, Dict[str, int]]:
+    async with session.begin():
+        query = (
+            select(
+                CartaoModel.clube,
+                CartaoModel.cartao,
+                func.count(CartaoModel.id).label("total")
+            )
+            .group_by(CartaoModel.clube, CartaoModel.cartao)
+        )
+
+        result = await session.execute(query)
+        cartoes_por_clube = result.all()
+        estatisticas = {}
+
+        for clube, tipo_cartao, total in cartoes_por_clube:
+            if clube not in estatisticas:
+                estatisticas[clube] = {"amarelo": 0, "vermelho": 0}
+
+            if tipo_cartao.lower() == "amarelo":
+                estatisticas[clube]["amarelo"] += total
+            elif tipo_cartao.lower() == "vermelho":
+                estatisticas[clube]["vermelho"] += total
+
+        return estatisticas
+
+
 @router.get("/{cartao_id}", response_model=CartaoDTO)
 async def get_cartao(cartao_id: int, session: AsyncSession = Depends(get_db)) -> CartaoDTO:
     async with session.begin():
         query = select(CartaoModel).options(
-            selectinload(CartaoModel.partida)
-        ).where(CartaoModel.id == cartao_id)
+        selectinload(CartaoModel.partida),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.gols),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.cartoes)
+    ).where(CartaoModel.id == cartao_id)
 
         result = await session.execute(query)
         cartao = result.scalars().first()
@@ -78,14 +117,24 @@ async def post_cartao(*, session: AsyncSession = Depends(get_db), cartao: Create
     
     await session.commit()
     await session.refresh(new_cartao)
-    
-    return CartaoDTO.from_orm(new_cartao)
+
+    query = select(CartaoModel).options(
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.gols),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.cartoes),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+    ).where(CartaoModel.id == new_cartao.id)
+    result = (await session.execute(query)).scalars().first()
+    return CartaoDTO.from_orm(result)
 
 
 @router.put("/{cartao_id}", response_model=CartaoDTO)
 async def update_cartao(cartao_id: int, cartao: CreateCartaoDTO, session: AsyncSession = Depends(get_db)) -> CartaoDTO:
     existing_cartao = await session.get(CartaoModel, cartao_id, options=[
-        selectinload(CartaoModel.partida)
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.gols),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.cartoes),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_mandante)
     ])
     
     if not existing_cartao:
@@ -116,36 +165,6 @@ async def delete_cartao(cartao_id: int, session: AsyncSession = Depends(get_db))
         return {"detail": "Cartão deletado com sucesso"}
     
 
-@router.get("/contagem-por-clube", response_model=Dict[str, Dict[str, int]])
-async def get_contagem_cartoes_por_clube(
-    session: AsyncSession = Depends(get_db)
-) -> Dict[str, Dict[str, int]]:
-    async with session.begin():
-        query = (
-            select(
-                CartaoModel.clube,
-                CartaoModel.cartao,
-                func.count(CartaoModel.id).label("total")
-            )
-            .group_by(CartaoModel.clube, CartaoModel.cartao)
-        )
-        
-        result = await session.execute(query)
-        cartoes_por_clube = result.all()
-        estatisticas = {}
-        
-        for clube, tipo_cartao, total in cartoes_por_clube:
-            if clube not in estatisticas:
-                estatisticas[clube] = {"amarelo": 0, "vermelho": 0}
-            
-            if tipo_cartao.lower() == "amarelo":
-                estatisticas[clube]["amarelo"] += total
-            elif tipo_cartao.lower() == "vermelho":
-                estatisticas[clube]["vermelho"] += total
-
-        return estatisticas
-    
-
 @router.get("/jogador/{nome_jogador}", response_model=List[CartaoDTO])
 async def get_cartoes_por_jogador(
     nome_jogador: str,
@@ -154,7 +173,10 @@ async def get_cartoes_por_jogador(
     async with session.begin():
         query = (
             select(CartaoModel)
-            .options(selectinload(CartaoModel.partida))
+            .options(selectinload(CartaoModel.partida).selectinload(PartidaModel.gols),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.cartoes),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(CartaoModel.partida).selectinload(PartidaModel.estatisticas_mandante))
             .where(CartaoModel.atleta == nome_jogador)
         )
         

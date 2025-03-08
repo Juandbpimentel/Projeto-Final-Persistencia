@@ -1,6 +1,8 @@
 # app/main.py
 from fastapi import FastAPI, Depends
 import pandas as pd
+from panel.io.fastapi import add_applications
+import panel as pn
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
@@ -14,17 +16,18 @@ import uvicorn
 from app.logging_utils import setup_logging, log_exceptions_middleware
 from app.database_util import Base, engine, get_db, init_db
 from app.models import (
-    partida_models,
-    gol_models,
-    cartoes_models,
-    estatisticas_mandante_models,
-    estatisticas_visitante_models
+    partida_models
 )
 
 from app.routes import (
     partida_routes,
+    cartoes_routes,
+    gols_routes,
+    estatisticas_mandante_routes,
+    estatisticas_visitante_routes,
+    telas_routes,
+    tratamento_routes,
 )
-from app.models.partida_models import PartidaDTO, PartidaModel, CreatePartidaDTO
 
 partida_models.PartidaDTO.resolve_refs()
 
@@ -51,6 +54,11 @@ app = FastAPI(lifespan=lifespan)
 app.middleware("http")(log_exceptions_middleware)
 
 app.include_router(partida_routes.router)
+app.include_router(cartoes_routes.router)
+app.include_router(estatisticas_visitante_routes.router)
+app.include_router(estatisticas_mandante_routes.router)
+app.include_router(gols_routes.router)
+app.include_router(tratamento_routes.router)
 
 
 @app.get("/")
@@ -75,7 +83,8 @@ def create_panel_app():
     return slider.rx() * '⭐'
 
 add_applications({
-    "/panel_app1": telas_routes.telaFormularioInserir,
-    "/panel_app2": telas_routes.telaVitoriasPorRodada,
-    "/panel_app3": "my_panel_app.py"
+    "/tela_vitorias_entre_times": telas_routes.telaVitoriasEntreDoisTimes,
+    "/tela_vitorias_por_rodadas": telas_routes.telaVitoriasPorRodada,
+    "/tela_partida_estatiscas": telas_routes.tela_estatisticas,
+    "/tela_grafico_gols": telas_routes.tela_grafico_gols
 }, app=app)

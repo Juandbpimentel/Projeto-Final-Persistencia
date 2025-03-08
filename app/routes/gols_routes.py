@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.models.gol_models import GolModel, GolDTO, CreateGolDTO
 from app.database_util import get_db
+from app.models.partida_models import PartidaModel
 
 router = APIRouter(
     prefix="/gols",
@@ -31,7 +32,11 @@ async def fetch_gols_with_cursor(
     start_cursor: Optional[int] = Query(None)
 ) -> GolsResponse:
     query = select(GolModel).order_by(GolModel.id).options(
-        selectinload(GolModel.partida)
+        selectinload(GolModel.partida),
+        selectinload(GolModel.partida).selectinload(PartidaModel.gols),
+        selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+        selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(GolModel.partida).selectinload(PartidaModel.cartoes)
     ).limit(limit)
     
     if start_cursor:
@@ -46,11 +51,41 @@ async def fetch_gols_with_cursor(
     return GolsResponse(gols=gols_dto, next_cursor=next_cursor)
 
 
+@router.get("/contagem-por-tipo-e-clube", response_model=Dict[str, Dict[str, int]])
+async def get_contagem_gols_por_tipo_e_clube(
+        session: AsyncSession = Depends(get_db)
+) -> Dict[str, Dict[str, int]]:
+    async with session.begin():
+        query = (
+            select(
+                GolModel.clube,
+                GolModel.tipo_de_gol,
+                func.count(GolModel.id).label("total")
+            )
+            .group_by(GolModel.clube, GolModel.tipo_de_gol)
+        )
+
+        result = await session.execute(query)
+        gols_por_clube = result.all()
+        estatisticas = {}
+
+        for clube, tipo_gol, total in gols_por_clube:
+            if clube not in estatisticas:
+                estatisticas[clube] = {}
+            estatisticas[clube][tipo_gol] = total
+
+        return estatisticas
+
+
 @router.get("/{gol_id}", response_model=GolDTO)
 async def get_gol(gol_id: int, session: AsyncSession = Depends(get_db)) -> GolDTO:
     async with session.begin():
         query = select(GolModel).options(
-            selectinload(GolModel.partida)
+            selectinload(GolModel.partida),
+            selectinload(GolModel.partida).selectinload(PartidaModel.gols),
+            selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+            selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+            selectinload(GolModel.partida).selectinload(PartidaModel.cartoes)
         ).where(GolModel.id == gol_id)
 
         result = await session.execute(query)
@@ -73,17 +108,26 @@ async def post_gol(*, session: AsyncSession = Depends(get_db), gol: CreateGolDTO
         tipo_de_gol=gol.tipo_de_gol
     )
     session.add(new_gol)
-    
     await session.commit()
     await session.refresh(new_gol)
-    
-    return GolDTO.from_orm(new_gol)
+
+    query = select(GolModel).options(
+        selectinload(GolModel.partida).selectinload(PartidaModel.gols),
+        selectinload(GolModel.partida).selectinload(PartidaModel.cartoes),
+        selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+    ).where(GolModel.id == new_gol.id)
+    result = (await session.execute(query)).scalars().first()
+    return GolDTO.from_orm(result)
 
 
 @router.put("/{gol_id}", response_model=GolDTO)
 async def update_gol(gol_id: int, gol: CreateGolDTO, session: AsyncSession = Depends(get_db)) -> GolDTO:
     existing_gol = await session.get(GolModel, gol_id, options=[
-        selectinload(GolModel.partida)
+        selectinload(GolModel.partida).selectinload(PartidaModel.gols),
+        selectinload(GolModel.partida).selectinload(PartidaModel.cartoes),
+        selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+        selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_mandante),
     ])
     
     if not existing_gol:
@@ -93,10 +137,8 @@ async def update_gol(gol_id: int, gol: CreateGolDTO, session: AsyncSession = Dep
         setattr(existing_gol, key, value)
 
     session.add(existing_gol)
-    
     await session.commit()
     await session.refresh(existing_gol)
-    
     return GolDTO.from_orm(existing_gol)
 
 
@@ -112,33 +154,6 @@ async def delete_gol(gol_id: int, session: AsyncSession = Depends(get_db)) -> di
         await session.commit()
     
         return {"detail": "Gol deleted successfully"}
-    
-    
-@router.get("/contagem-por-tipo-e-clube", response_model=Dict[str, Dict[str, int]])
-async def get_contagem_gols_por_tipo_e_clube(
-    session: AsyncSession = Depends(get_db)
-) -> Dict[str, Dict[str, int]]:
-    async with session.begin():
-        query = (
-            select(
-                GolModel.clube,
-                GolModel.tipo_de_gol,
-                func.count(GolModel.id).label("total")
-            )
-            .group_by(GolModel.clube, GolModel.tipo_de_gol)
-        )
-        
-        result = await session.execute(query)
-        gols_por_clube = result.all()
-        estatisticas = {}
-    
-        for clube, tipo_gol, total in gols_por_clube:
-            if clube not in estatisticas:
-                estatisticas[clube] = {}
-            estatisticas[clube][tipo_gol] = total
-
-        return estatisticas
-    
 
 @router.get("/jogador/{nome_jogador}", response_model=List[GolDTO])
 async def get_gols_por_jogador(
@@ -148,8 +163,13 @@ async def get_gols_por_jogador(
     async with session.begin():
         query = (
             select(GolModel)
-            .options(selectinload(GolModel.partida))
-            .where(GolModel.atleta == nome_jogador)
+            .options(
+                selectinload(GolModel.partida),
+                selectinload(GolModel.partida).selectinload(PartidaModel.gols),
+                selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_mandante),
+                selectinload(GolModel.partida).selectinload(PartidaModel.estatisticas_visitante),
+                selectinload(GolModel.partida).selectinload(PartidaModel.cartoes)
+            ).where(GolModel.atleta == nome_jogador)
         )
 
         result = await session.execute(query)

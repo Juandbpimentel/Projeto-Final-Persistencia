@@ -28,3 +28,4 @@ bokeh-fastapi
 panel[fastapi]
 matplotlib
 unidecode
+Pillow
