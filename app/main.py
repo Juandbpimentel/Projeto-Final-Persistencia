@@ -7,6 +7,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from yaml import load, FullLoader
+import panel as pn
 
 from app.database_util import Base, engine, get_db, init_db
 from app.logging_utils import setup_logging, log_exceptions_middleware
@@ -16,9 +17,14 @@ from app.models import (
 from app.routes import (
     partida_routes,
     tratamento_routes,
+    cartoes_routes,
+    gols_routes,
     estatisticas_visitante_routes,
-    estatisticas_mandante_routes
+    estatisticas_mandante_routes,
+    telas_routes
 )
+
+from panel.io.fastapi import add_applications
 
 partida_models.PartidaDTO.resolve_refs()
 
@@ -48,6 +54,8 @@ app.include_router(partida_routes.router)
 app.include_router(tratamento_routes.router)
 app.include_router(estatisticas_visitante_routes.router)
 app.include_router(estatisticas_mandante_routes.router)
+app.include_router(gols_routes.router)
+app.include_router(cartoes_routes.router)
 
 @app.get("/")
 async def read_root(session: AsyncSession = Depends(get_db)):
@@ -65,3 +73,13 @@ async def read_root(session: AsyncSession = Depends(get_db)):
     logging.info(f"Query result: {result}")
     result_dicts = pd.DataFrame(result).to_dict(orient='records')
     return {"Hello": "World", "resultado de teste de banco de dados": result_dicts}
+
+def create_panel_app():
+    slider = pn.widgets.IntSlider(name='Slider', start=0, end=10, value=3)
+    return slider.rx() * '⭐'
+
+add_applications({
+    "/panel_app1": telas_routes.telaFormularioInserir,
+    "/panel_app2": telas_routes.telaVitoriasPorRodada,
+    "/panel_app3": "my_panel_app.py"
+}, app=app)

@@ -46,5 +46,5 @@ pip install -r requirements.txt
 Rode o projeto:
 
 ```bash 
-python -m fastapi dev .\app\main.py --reload
+python -m fastapi dev ./app/main.py --reload
 ```
