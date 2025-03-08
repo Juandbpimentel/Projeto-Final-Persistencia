@@ -1,19 +1,23 @@
+from fastapi import FastAPI, Depends
+
 import logging
 import uuid
 from contextlib import asynccontextmanager
 
 import pandas as pd
-from fastapi import FastAPI, Depends
+from panel.io.fastapi import add_applications
+import panel as pn
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from yaml import load, FullLoader
-import panel as pn
+
 
 from app.database_util import Base, engine, get_db, init_db
 from app.logging_utils import setup_logging, log_exceptions_middleware
 from app.models import (
     partida_models
 )
+
 from app.routes import (
     partida_routes,
     tratamento_routes,
@@ -23,8 +27,6 @@ from app.routes import (
     estatisticas_mandante_routes,
     telas_routes
 )
-
-from panel.io.fastapi import add_applications
 
 partida_models.PartidaDTO.resolve_refs()
 

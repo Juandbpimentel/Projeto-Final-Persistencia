@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, Self
+from typing import Optional, Any, Self
 
 from pydantic import BaseModel, Field
 from sqlalchemy import String, ForeignKey, Integer, DOUBLE_PRECISION, Boolean
@@ -27,6 +27,7 @@ class EstatisticasMandanteModel(Base):
     escanteios: Mapped[int] = mapped_column(Integer)
     vencedor: Mapped[bool] = mapped_column(Boolean)
     partida: Mapped["PartidaModel"] = relationship("PartidaModel", back_populates="estatisticas_mandante")
+
 
 class EstatisticasMandanteDTO(BaseModel):
     id: Optional[int] = Field(None, alias="id")
@@ -69,6 +70,7 @@ class EstatisticasMandanteDTO(BaseModel):
             partida=ChildPartidaDTO.from_orm(partida_model)
         )
 
+
 class ChildEstatisticasMandanteDTO(BaseModel):
     id: Optional[int] = Field(None, alias="id")
     rodada: int
@@ -103,19 +105,3 @@ class ChildEstatisticasMandanteDTO(BaseModel):
             escanteios=estatisticas_mandante.escanteios,
             vencedor=estatisticas_mandante.vencedor
         )
-
-class CreateEstatisticasMandanteDTO(BaseModel):
-    partida_id: int
-    rodada: int
-    clube: str
-    chutes: int
-    chutes_no_alvo: int
-    posse_de_bola: float
-    passes: int
-    precisao_passes: float
-    faltas: int
-    cartao_amarelo: int
-    cartao_vermelho: int
-    impedimentos: int
-    escanteios: int
-    vencedor: bool

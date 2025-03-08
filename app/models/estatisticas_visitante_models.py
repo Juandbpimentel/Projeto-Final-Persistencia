@@ -104,19 +104,3 @@ class ChildEstatisticasVisitanteDTO(BaseModel):
             escanteios=estatisticas_visitante.escanteios,
             vencedor=estatisticas_visitante.vencedor
         )
-
-class CreateEstatisticasVisitanteDTO(BaseModel):
-    partida_id: int
-    rodada: int
-    clube: str
-    chutes: int
-    chutes_no_alvo: int
-    posse_de_bola: float
-    passes: int
-    precisao_passes: float
-    faltas: int
-    cartao_amarelo: int
-    cartao_vermelho: int
-    impedimentos: int
-    escanteios: int
-    vencedor: bool
